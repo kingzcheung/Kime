@@ -1,7 +1,5 @@
 package com.kingzcheung.kime.ui
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,12 +69,6 @@ fun KeyboardLayout(
     val bubbleSizePx = with(density) { BubbleSize.toPx() }
     val bubbleWidthDownPx = with(density) { BubbleWidthDown.toPx() }
     val bubbleOffsetYPx = with(density) { BubbleOffsetY.toPx() }
-    
-    val bubbleAlpha by animateFloatAsState(
-        targetValue = if (swipeState.isSwiping) 1f else 0f,
-        animationSpec = tween(durationMillis = 150),
-        label = "bubbleAlpha"
-    )
     
     Box(
         modifier = modifier.onGloballyPositioned { coordinates ->
@@ -282,7 +274,7 @@ fun KeyboardLayout(
             }
         }
         
-        if (swipeState.isSwiping && bubbleAlpha > 0f) {
+        if (swipeState.isSwiping) {
             val currentSwipeText = swipeState.swipeText
             if (currentSwipeText != null) {
                 val bubbleBgColor = if (isDarkTheme) Color(0xFF45474A) else Color(0xFFF0F1F2)

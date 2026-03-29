@@ -44,7 +44,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+
+data class InputUIState(
+    val candidates: Array<String> = emptyArray(),
+    val candidateComments: Array<String> = emptyArray(),
+    val inputText: String = "",
+    val isComposing: Boolean = false,
+    val isAsciiMode: Boolean = false,
+    val schemaName: String = "",
+    val enterKeyText: String = "发送",
+    val darkMode: Int = 0,
+    val themeId: String = "ocean_blue"
+)
 
 /**
  * Kime 输入法服务
@@ -82,16 +95,8 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     // 主线程 Handler
     private val mainHandler = Handler(Looper.getMainLooper())
     
-    // UI 状态
-    private val candidatesState = mutableStateOf<Array<String>>(emptyArray())
-    private val candidateCommentsState = mutableStateOf<Array<String>>(emptyArray())
-    private val inputTextState = mutableStateOf("")
-    private val isComposingState = mutableStateOf(false)
-    private val isAsciiModeState = mutableStateOf(false)
-    private val schemaNameState = mutableStateOf("")
-    private val enterKeyTextState = mutableStateOf("发送")
-    private val darkModeState = mutableStateOf(DARK_MODE_LIGHT)
-    private val themeIdState = mutableStateOf("ocean_blue")
+    // UI 状态 - 合并为单一状态对象，减少Compose重组
+    private val uiState = mutableStateOf(InputUIState())
     private val clipboardItemsState = mutableStateOf<List<com.kingzcheung.kime.clipboard.ClipboardItem>>(emptyList())
     private val quickSendItemsState = mutableStateOf<List<com.kingzcheung.kime.clipboard.ClipboardItem>>(emptyList())
     
@@ -107,13 +112,20 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         }
     }
     
-    private fun playKeySound() {
+    private fun playKeySound(keyType: String = "standard") {
         if (!SettingsPreferences.isSoundEnabled(this)) return
         
         val volume = SettingsPreferences.getSoundVolume(this) / 100f
         val soundVolume = (volume * 100).toInt()
         
-        audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK, soundVolume / 100f)
+        val effectType = when (keyType) {
+            "delete" -> AudioManager.FX_KEYPRESS_DELETE
+            "enter" -> AudioManager.FX_KEYPRESS_RETURN
+            "space" -> AudioManager.FX_KEYPRESS_SPACEBAR
+            else -> AudioManager.FX_KEYPRESS_STANDARD
+        }
+        
+        audioManager.playSoundEffect(effectType, soundVolume / 100f)
     }
     
     private fun performVibration() {
@@ -132,28 +144,30 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         }
     }
     
-    private fun performKeyPressEffect() {
-        playKeySound()
+    private fun performKeyPressEffect(keyType: String = "standard") {
+        playKeySound(keyType)
         performVibration()
     }
     
     private fun loadDarkModePreference() {
-        darkModeState.value = SettingsPreferences.getDarkMode(this)
-        themeIdState.value = SettingsPreferences.getKeyboardTheme(this)
+        uiState.value = uiState.value.copy(
+            darkMode = SettingsPreferences.getDarkMode(this),
+            themeId = SettingsPreferences.getKeyboardTheme(this)
+        )
     }
     
     private fun saveDarkModePreference(mode: Int) {
         SettingsPreferences.setDarkMode(this, mode)
-        darkModeState.value = mode
+        uiState.value = uiState.value.copy(darkMode = mode)
     }
     
     fun toggleDarkMode() {
-        val newMode = if (darkModeState.value == DARK_MODE_LIGHT) DARK_MODE_DARK else DARK_MODE_LIGHT
+        val newMode = if (uiState.value.darkMode == DARK_MODE_LIGHT) DARK_MODE_DARK else DARK_MODE_LIGHT
         saveDarkModePreference(newMode)
     }
     
     fun isDarkTheme(): Boolean {
-        return darkModeState.value == DARK_MODE_DARK
+        return uiState.value.darkMode == DARK_MODE_DARK
     }
 
     override fun onCreate() {
@@ -231,6 +245,7 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     override fun onCreateInputView(): View {
         return ComposeView(this).apply {
             setContent {
+                val state = uiState.value
                 val isDarkTheme = isDarkTheme()
                 KimeTheme(darkTheme = isDarkTheme) {
                     Surface(
@@ -240,17 +255,17 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                         color = MaterialTheme.colorScheme.surface
                     ) {
                         KeyboardView(
-                            candidates = candidatesState.value,
-                            inputText = inputTextState.value,
-                            isComposing = isComposingState.value,
-                            isAsciiMode = isAsciiModeState.value,
-                            schemaName = schemaNameState.value,
-                            enterKeyText = enterKeyTextState.value,
+                            candidates = state.candidates,
+                            inputText = state.inputText,
+                            isComposing = state.isComposing,
+                            isAsciiMode = state.isAsciiMode,
+                            schemaName = state.schemaName,
+                            enterKeyText = state.enterKeyText,
                             isDarkTheme = isDarkTheme,
-                            themeId = themeIdState.value,
+                            themeId = state.themeId,
                             clipboardItems = clipboardItemsState.value,
                             quickSendItems = quickSendItemsState.value,
-                            candidateComments = candidateCommentsState.value,
+                            candidateComments = state.candidateComments,
                             onKeyPress = { key, isShifted ->
                                 handleKeyPress(key, isShifted)
                             },
@@ -285,23 +300,18 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                                 Log.d(TAG, "QuickSend clicked")
                             },
                             onHandwriting = {
-                                // TODO: 实现手写找字功能
                                 Log.d(TAG, "Handwriting clicked")
                             },
                             onEmoji = {
-                                // 表情功能
                                 commitText("😊")
                             },
                             onReloadConfig = {
-                                // 重载配置
                                 reloadConfig()
                             },
                             onSettings = {
-                                // 打开输入法设置
                                 openSettings()
                             },
                             onMixedInput = {
-                                // 切换五笔拼音混输
                                 toggleMixedInput()
                             },
                             onHideKeyboard = {
@@ -330,7 +340,7 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     
     private fun updateEnterKeyText(editorInfo: EditorInfo) {
         val action = editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION
-        enterKeyTextState.value = when (action) {
+        val enterText = when (action) {
             EditorInfo.IME_ACTION_GO -> "前往"
             EditorInfo.IME_ACTION_SEARCH -> "搜索"
             EditorInfo.IME_ACTION_SEND -> "发送"
@@ -338,6 +348,7 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
             EditorInfo.IME_ACTION_DONE -> "完成"
             else -> "换行"
         }
+        uiState.value = uiState.value.copy(enterKeyText = enterText)
     }
 
     override fun onFinishInput() {
@@ -354,20 +365,6 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
     
     /**
-     * 选择候选词
-     */
-    private fun selectCandidate(index: Int) {
-        if (rimeEngine.selectCandidate(index)) {
-            // 获取提交的文本
-            val committedText = rimeEngine.commit()
-            if (committedText.isNotEmpty()) {
-                commitText(committedText)
-            }
-            updateUI()
-        }
-    }
-    
-    /**
      * 收起键盘
      */
     private fun hideKeyboard() {
@@ -375,163 +372,193 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
     
     /**
-     * 更新 UI 状态
+     * 更新 UI 状态 - 合并所有状态更新，减少Compose重组次数
      */
     private fun updateUI() {
-        inputTextState.value = rimeEngine.getInput()
+        val inputText = rimeEngine.getInput()
         val candidatesWithComments = rimeEngine.getCandidatesWithComments()
-        candidatesState.value = candidatesWithComments.map { it.text }.toTypedArray()
-        candidateCommentsState.value = candidatesWithComments.map { it.comment }.toTypedArray()
-        isComposingState.value = inputTextState.value.isNotEmpty()
-        isAsciiModeState.value = rimeEngine.isAsciiMode()
-        Log.d(TAG, "updateUI: inputText='${inputTextState.value}', isComposing=${isComposingState.value}, candidates=${candidatesState.value.size}")
+        
+        uiState.value = uiState.value.copy(
+            inputText = inputText,
+            candidates = candidatesWithComments.map { it.text }.toTypedArray(),
+            candidateComments = candidatesWithComments.map { it.comment }.toTypedArray(),
+            isComposing = inputText.isNotEmpty(),
+            isAsciiMode = rimeEngine.isAsciiMode()
+        )
     }
     
     private fun updateSchemaName() {
         val currentSchemaId = rimeEngine.getCurrentSchema()
         val schemas = SchemaConfigHelper.loadSchemas(this)
         val schemaInfo = schemas.find { it.schemaId == currentSchemaId }
-        schemaNameState.value = schemaInfo?.name ?: currentSchemaId
+        uiState.value = uiState.value.copy(schemaName = schemaInfo?.name ?: currentSchemaId)
     }
 
     private fun handleKeyPress(key: String, isShifted: Boolean) {
-        performKeyPressEffect()
-        when (key) {
-            "delete" -> {
-                Log.d(TAG, "delete key: isComposing=${isComposingState.value}, inputText='${inputTextState.value}'")
-                if (isComposingState.value || inputTextState.value.isNotEmpty()) {
-                    // 如果正在组合中或有输入编码，发送退格键给 Rime 处理
-                    // Rime使用X11 KeySym键码：BackSpace = 0xff08 (65288)
-                    rimeEngine.processKey(0xff08, 0)  // X11 KeySym for BackSpace
-                    updateUI()
-                    
-                    // 如果组合已清空，不需要额外处理
-                    if (!isComposingState.value) {
-                        rimeEngine.clearComposition()
+        val keyType = when (key) {
+            "delete", "clear_composition" -> "delete"
+            "enter" -> "enter"
+            "space" -> "space"
+            else -> "standard"
+        }
+        performKeyPressEffect(keyType)
+        
+        serviceScope.launch(Dispatchers.Default) {
+            val state = uiState.value
+            var needsUIUpdate = false
+            
+            when (key) {
+                "delete" -> {
+                    if (state.isComposing || state.inputText.isNotEmpty()) {
+                        rimeEngine.processKey(0xff08, 0)
+                        needsUIUpdate = true
+                        
+                        if (!rimeEngine.getInput().isNotEmpty()) {
+                            rimeEngine.clearComposition()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+                        }
                     }
-                } else {
-                    // 否则直接删除文本
-                    sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
+                }
+                "clear_composition" -> {
+                    rimeEngine.clearComposition()
+                    needsUIUpdate = true
+                }
+                "enter" -> {
+                    if (state.isComposing) {
+                        val committedText = rimeEngine.commit()
+                        if (committedText.isNotEmpty()) {
+                            withContext(Dispatchers.Main) {
+                                commitText(committedText)
+                            }
+                        }
+                        rimeEngine.clearComposition()
+                        needsUIUpdate = true
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            val action = currentInputEditorInfo?.imeOptions ?: 0
+                            when (action and EditorInfo.IME_MASK_ACTION) {
+                                EditorInfo.IME_ACTION_GO,
+                                EditorInfo.IME_ACTION_SEARCH,
+                                EditorInfo.IME_ACTION_SEND,
+                                EditorInfo.IME_ACTION_NEXT,
+                                EditorInfo.IME_ACTION_DONE -> {
+                                    sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+                                }
+                                else -> {
+                                    sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+                                }
+                            }
+                        }
+                    }
+                }
+                "space" -> {
+                    if (state.isComposing) {
+                        if (state.candidates.isNotEmpty()) {
+                            selectCandidateAsync(0)
+                        } else {
+                            val input = state.inputText
+                            if (input.isNotEmpty()) {
+                                withContext(Dispatchers.Main) {
+                                    commitText(input)
+                                }
+                                rimeEngine.clearComposition()
+                                needsUIUpdate = true
+                            }
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            commitText(" ")
+                        }
+                    }
+                }
+                "shift" -> {
+                }
+                "mode_change" -> {
+                }
+                "ime_switch" -> {
+                    withContext(Dispatchers.Main) {
+                        switchInputMethod()
+                    }
+                }
+                "abc" -> {
+                }
+                "emoji" -> {
+                    withContext(Dispatchers.Main) {
+                        commitText("😊")
+                    }
+                }
+                else -> {
+                    if (key.matches(Regex("[0-9]")) ||
+                        key in listOf("-", "/", ":", ";", "(", ")", "@", "\"", "'", "#", ".", ",", "!", "?", "，", "。")) {
+                        if (state.isComposing) {
+                            val committedText = rimeEngine.commit()
+                            if (committedText.isNotEmpty()) {
+                                withContext(Dispatchers.Main) {
+                                    commitText(committedText)
+                                }
+                            }
+                            rimeEngine.clearComposition()
+                            needsUIUpdate = true
+                        }
+                        withContext(Dispatchers.Main) {
+                            commitText(key)
+                        }
+                    } else {
+                        val char = if (isShifted) key.uppercase() else key
+                        val keyCode = key.lowercase()[0].code
+                        val mask = if (isShifted) KeyEvent.META_SHIFT_ON else 0
+                        
+                        val processed = rimeEngine.processKey(keyCode, mask)
+                        
+                        if (processed) {
+                            needsUIUpdate = true
+                            
+                            val committedText = rimeEngine.commit()
+                            if (committedText.isNotEmpty()) {
+                                withContext(Dispatchers.Main) {
+                                    commitText(committedText)
+                                }
+                                needsUIUpdate = true
+                            }
+                        } else {
+                            if (!state.isComposing) {
+                                withContext(Dispatchers.Main) {
+                                    commitText(char)
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            "clear_composition" -> {
-                Log.d(TAG, "clear_composition: inputText='${inputTextState.value}'")
-                // 清空正在输入的编码
-                rimeEngine.clearComposition()
+            
+            if (needsUIUpdate) {
+                withContext(Dispatchers.Main) {
+                    updateUI()
+                }
+            }
+        }
+    }
+    
+    private suspend fun selectCandidateAsync(index: Int) {
+        if (rimeEngine.selectCandidate(index)) {
+            val committedText = rimeEngine.commit()
+            if (committedText.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    commitText(committedText)
+                }
+            }
+            withContext(Dispatchers.Main) {
                 updateUI()
             }
-            "enter" -> {
-                if (isComposingState.value) {
-                    // 如果正在组合中，提交当前输入
-                    val committedText = rimeEngine.commit()
-                    if (committedText.isNotEmpty()) {
-                        commitText(committedText)
-                    }
-                    rimeEngine.clearComposition()
-                    updateUI()
-                } else {
-                    // 否则发送回车键
-                    val action = currentInputEditorInfo?.imeOptions ?: 0
-                    when (action and EditorInfo.IME_MASK_ACTION) {
-                        EditorInfo.IME_ACTION_GO,
-                        EditorInfo.IME_ACTION_SEARCH,
-                        EditorInfo.IME_ACTION_SEND,
-                        EditorInfo.IME_ACTION_NEXT,
-                        EditorInfo.IME_ACTION_DONE -> {
-                            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
-                        }
-                        else -> {
-                            sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
-                        }
-                    }
-                }
-            }
-            "space" -> {
-                if (isComposingState.value) {
-                    // 如果正在组合中
-                    if (candidatesState.value.isNotEmpty()) {
-                        // 有候选词，选择第一个
-                        selectCandidate(0)
-                    } else {
-                        // 没有候选词，输入当前编码的字母
-                        val input = inputTextState.value
-                        if (input.isNotEmpty()) {
-                            commitText(input)
-                            rimeEngine.clearComposition()
-                            updateUI()
-                        }
-                    }
-                } else {
-                    commitText(" ")
-                }
-            }
-            "shift" -> {
-                // 切换大小写状态（暂不实现）
-            }
-            "mode_change" -> {
-                // 切换输入模式（中文/英文）- 现在由 KeyboardView 处理
-            }
-            "ime_switch" -> {
-                // 切换输入法模式（英文/五笔）
-                switchInputMethod()
-            }
-            "abc" -> {
-                // 返回全键盘 - 由 KeyboardView 处理
-            }
-            "emoji" -> {
-                // 表情键 - 暂时输入一个默认表情
-                commitText("😊")
-            }
-            else -> {
-                // 处理数字、符号和字母键输入
-                // 数字和符号直接输入，不经过 Rime
-                if (key.matches(Regex("[0-9]")) ||
-                    key in listOf("-", "/", ":", ";", "(", ")", "@", "\"", "'", "#", ".", ",", "!", "?", "，", "。")) {
-                    // 直接输入数字和符号
-                    if (isComposingState.value) {
-                        // 如果正在组合中，先提交当前输入
-                        val committedText = rimeEngine.commit()
-                        if (committedText.isNotEmpty()) {
-                            commitText(committedText)
-                        }
-                        rimeEngine.clearComposition()
-                        updateUI()
-                    }
-                    commitText(key)
-                } else {
-                    // 处理字母键输入
-                    val char = if (isShifted) key.uppercase() else key
-                    
-                    // 将按键发送给 Rime 引擎处理
-                    // Rime 使用 ASCII keycode（a=97, b=98, ...）
-                    // 对于小写字母，使用 ASCII 值；对于大写字母，也使用小写字母的 ASCII 值 + shift mask
-                    val keyCode = key.lowercase()[0].code  // 使用小写字母的 ASCII 码
-                    val mask = if (isShifted) KeyEvent.META_SHIFT_ON else 0
-                    
-                    Log.d(TAG, "Processing key: char=$char, keyCode=$keyCode, mask=$mask")
-                    
-                    val processed = rimeEngine.processKey(keyCode, mask)
-                    
-                    Log.d(TAG, "Rime processed: $processed, input=${rimeEngine.getInput()}")
-                    
-                    if (processed) {
-                        // Rime 处理了按键，更新 UI
-                        updateUI()
-                        
-                        // 检查是否有提交的文本
-                        val committedText = rimeEngine.commit()
-                        if (committedText.isNotEmpty()) {
-                            commitText(committedText)
-                            updateUI()
-                        }
-                    } else {
-                        // Rime 没有处理按键，直接输入字符
-                        if (!isComposingState.value) {
-                            commitText(char)
-                        }
-                    }
-                }
-            }
+        }
+    }
+    
+    private fun selectCandidate(index: Int) {
+        serviceScope.launch(Dispatchers.Default) {
+            selectCandidateAsync(index)
         }
     }
     
@@ -666,8 +693,7 @@ patch:
      * 选择剪切板项
      */
     private fun selectClipboardItem(text: String) {
-        // 如果正在组合中，先清除
-        if (isComposingState.value) {
+        if (uiState.value.isComposing) {
             rimeEngine.clearComposition()
             updateUI()
         }
