@@ -68,12 +68,14 @@ fun NumberKeyboardLayout(
             }
             
             // 右列：退格
-            IconKeyButton(
+            SwipeableIconKeyButton(
                     icon = rememberVectorPainter(Icons.AutoMirrored.Filled.Backspace),
                     onClick = { onKeyPress("delete") },
                     backgroundColor = specialKeyBackgroundColor,
                     iconColor = keyTextColor,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    swipeText = "清空",
+                    onSwipe = { onKeyPress("clear_composition") }
                 )
         }
         

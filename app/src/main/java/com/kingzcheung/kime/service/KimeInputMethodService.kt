@@ -378,6 +378,7 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         candidatesState.value = rimeEngine.getCandidates()
         isComposingState.value = inputTextState.value.isNotEmpty()
         isAsciiModeState.value = rimeEngine.isAsciiMode()
+        Log.d(TAG, "updateUI: inputText='${inputTextState.value}', isComposing=${isComposingState.value}, candidates=${candidatesState.value.size}")
     }
     
     private fun updateSchemaName() {
@@ -391,9 +392,11 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         performKeyPressEffect()
         when (key) {
             "delete" -> {
-                if (isComposingState.value) {
-                    // 如果正在组合中，发送退格键给 Rime 处理
-                    rimeEngine.processKey(KeyEvent.KEYCODE_DEL, 0)
+                Log.d(TAG, "delete key: isComposing=${isComposingState.value}, inputText='${inputTextState.value}'")
+                if (isComposingState.value || inputTextState.value.isNotEmpty()) {
+                    // 如果正在组合中或有输入编码，发送退格键给 Rime 处理
+                    // Rime使用X11 KeySym键码：BackSpace = 0xff08 (65288)
+                    rimeEngine.processKey(0xff08, 0)  // X11 KeySym for BackSpace
                     updateUI()
                     
                     // 如果组合已清空，不需要额外处理
@@ -404,6 +407,12 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                     // 否则直接删除文本
                     sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
                 }
+            }
+            "clear_composition" -> {
+                Log.d(TAG, "clear_composition: inputText='${inputTextState.value}'")
+                // 清空正在输入的编码
+                rimeEngine.clearComposition()
+                updateUI()
             }
             "enter" -> {
                 if (isComposingState.value) {
