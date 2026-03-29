@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.jpg" alt="Kime Logo" width="600"/>
+  <img src="docs/logo.jpg" alt="Kime Logo" width="800"/>
 </p>
 
 # Kime - 安卓五笔输入法
