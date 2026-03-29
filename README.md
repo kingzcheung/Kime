@@ -106,4 +106,4 @@ app/
 
 ## 许可证
 
-MIT License
+GPLv3 License
