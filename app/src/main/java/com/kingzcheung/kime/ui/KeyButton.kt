@@ -363,3 +363,84 @@ fun IconKeyButton(
         )
     }
 }
+
+@Composable
+fun SwipeableIconKeyButton(
+    icon: Painter,
+    onClick: () -> Unit,
+    backgroundColor: Color,
+    iconColor: Color,
+    modifier: Modifier = Modifier,
+    isHighlighted: Boolean = false,
+    iconSize: androidx.compose.ui.unit.Dp = 20.dp,
+    swipeText: String? = null,
+    onSwipe: (() -> Unit)? = null
+) {
+    var isPressed by remember { mutableStateOf(false) }
+    var dragOffsetY by remember { mutableStateOf(0f) }
+    var hasTriggeredSwipe by remember { mutableStateOf(false) }
+    
+    val swipeThreshold = -50f
+    val bubbleShowThreshold = swipeThreshold * 0.3f
+    
+    Box(
+        modifier = modifier
+            .height(44.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(
+                if (isPressed) backgroundColor.copy(alpha = 0.7f)
+                else if (isHighlighted) backgroundColor.copy(alpha = 0.8f)
+                else backgroundColor
+            )
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = {
+                        isPressed = true
+                        dragOffsetY = 0f
+                        hasTriggeredSwipe = false
+                    },
+                    onDragEnd = {
+                        if (!hasTriggeredSwipe && dragOffsetY > swipeThreshold) {
+                            onClick()
+                        }
+                        isPressed = false
+                        dragOffsetY = 0f
+                        hasTriggeredSwipe = false
+                    },
+                    onDragCancel = {
+                        isPressed = false
+                        dragOffsetY = 0f
+                        hasTriggeredSwipe = false
+                    },
+                    onDrag = { change, dragAmount ->
+                        dragOffsetY += dragAmount.y
+                        
+                        if (dragOffsetY < swipeThreshold && !hasTriggeredSwipe && onSwipe != null) {
+                            hasTriggeredSwipe = true
+                            onSwipe()
+                        }
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = icon,
+            contentDescription = null,
+            tint = iconColor,
+            modifier = Modifier.size(iconSize)
+        )
+        
+        if (!swipeText.isNullOrEmpty()) {
+            Text(
+                text = swipeText,
+                color = iconColor.copy(alpha = 0.5f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                modifier = Modifier.offset(y = (-14).dp)
+            )
+        }
+    }
+}

@@ -133,12 +133,14 @@ IconKeyButton(
                 modifier = Modifier.weight(1f)
             )
             
-IconKeyButton(
+SwipeableIconKeyButton(
             icon = rememberVectorPainter(Icons.AutoMirrored.Filled.Backspace),
             onClick = { onKeyPress("delete") },
             backgroundColor = specialKeyBackgroundColor,
             iconColor = keyTextColor,
-            modifier = Modifier.weight(1.2f)
+            modifier = Modifier.weight(1.2f),
+            swipeText = "清空",
+            onSwipe = { onKeyPress("clear_composition") }
         )
         }
     }
