@@ -2,7 +2,6 @@ package com.kingzcheung.kime.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -14,7 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -232,13 +232,11 @@ fun CandidateBar(
                 Spacer(modifier = Modifier.width(8.dp))
             }
             
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .horizontalScroll(rememberScrollState()),
+            LazyRow(
+                modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                displayCandidates.forEachIndexed { index, candidate ->
+                itemsIndexed(displayCandidates) { index, candidate ->
                     CandidateItem(
                         text = candidate,
                         index = index,

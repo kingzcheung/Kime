@@ -82,17 +82,12 @@ class RimeEngine {
      */
     fun processKey(keycode: Int, mask: Int): Boolean {
         if (!isInitialized) {
-            Log.w(TAG, "Engine not initialized, cannot process key")
             return false
         }
         if (!nativeIsMaintaining()) {
-            val result = nativeProcessKey(keycode, mask)
-            Log.d(TAG, "processKey($keycode, $mask) = $result")
-            return result
-        } else {
-            Log.w(TAG, "Engine is maintaining, cannot process key")
-            return false
+            return nativeProcessKey(keycode, mask)
         }
+        return false
     }
     
     /**
@@ -100,9 +95,7 @@ class RimeEngine {
      * @return 候选词数组
      */
     fun getCandidates(): Array<String> {
-        val candidates = nativeGetCandidates() ?: emptyArray()
-        Log.d(TAG, "getCandidates: ${candidates.size} candidates")
-        return candidates
+        return nativeGetCandidates() ?: emptyArray()
     }
     
     /**
@@ -111,7 +104,6 @@ class RimeEngine {
      */
     fun getCandidatesWithComments(): Array<RimeCandidate> {
         val rawCandidates = nativeGetCandidatesWithComments() ?: emptyArray()
-        Log.d(TAG, "getCandidatesWithComments: ${rawCandidates.size} candidates")
         return rawCandidates.map { pair ->
             RimeCandidate(
                 text = pair.getOrElse(0) { "" },
@@ -120,42 +112,19 @@ class RimeEngine {
         }.toTypedArray()
     }
     
-    /**
-     * 获取当前输入的编码
-     * @return 输入编码字符串
-     */
     fun getInput(): String {
-        val input = nativeGetInput() ?: ""
-        Log.d(TAG, "getInput: '$input'")
-        return input
+        return nativeGetInput() ?: ""
     }
     
-    /**
-     * 选择候选词
-     * @param index 候选词索引
-     * @return 是否成功选择
-     */
     fun selectCandidate(index: Int): Boolean {
-        val result = nativeSelectCandidate(index)
-        Log.d(TAG, "selectCandidate($index) = $result")
-        return result
+        return nativeSelectCandidate(index)
     }
     
-    /**
-     * 提交当前输入
-     * @return 提交的文本
-     */
     fun commit(): String {
-        val text = nativeCommit() ?: ""
-        Log.d(TAG, "commit: '$text'")
-        return text
+        return nativeCommit() ?: ""
     }
     
-    /**
-     * 清除当前输入
-     */
     fun clearComposition() {
-        Log.d(TAG, "clearComposition")
         nativeClearComposition()
     }
     
@@ -165,61 +134,32 @@ class RimeEngine {
      */
     fun toggleAsciiMode(): Boolean {
         if (!isInitialized) {
-            Log.w(TAG, "Engine not initialized, cannot toggle ascii mode")
             return false
         }
-        val result = nativeToggleAsciiMode()
-        Log.d(TAG, "toggleAsciiMode() = $result")
-        return result
+        return nativeToggleAsciiMode()
     }
     
-    /**
-     * 获取当前是否为英文模式
-     * @return 是否为英文模式
-     */
     fun isAsciiMode(): Boolean {
         if (!isInitialized) return false
         return nativeIsAsciiMode()
     }
     
-    /**
-     * 切换输入方案
-     * @param schemaId 方案ID（如 "wubi86", "wubi86_pinyin"）
-     * @return 是否成功切换
-     */
     fun switchSchema(schemaId: String): Boolean {
         if (!isInitialized) {
-            Log.w(TAG, "Engine not initialized, cannot switch schema")
             return false
         }
-        val result = nativeSwitchSchema(schemaId)
-        Log.d(TAG, "switchSchema($schemaId) = $result")
-        return result
+        return nativeSwitchSchema(schemaId)
     }
     
-    /**
-     * 部署方案
-     * @return 是否成功部署
-     */
     fun deploy(): Boolean {
         if (!isInitialized) {
-            Log.w(TAG, "Engine not initialized, cannot deploy")
             return false
         }
-        Log.d(TAG, "Starting deployment...")
-        val result = nativeDeploy()
-        Log.d(TAG, "deploy() = $result")
-        return result
+        return nativeDeploy()
     }
     
-    /**
-     * 获取可用的方案列表
-     * @return 方案ID数组
-     */
     fun getAvailableSchemas(): Array<String> {
-        val schemas = nativeGetAvailableSchemas() ?: emptyArray()
-        Log.d(TAG, "getAvailableSchemas: ${schemas.size} schemas")
-        return schemas
+        return nativeGetAvailableSchemas() ?: emptyArray()
     }
     
     /**
