@@ -17,7 +17,6 @@ local.properties
 # librime and its dependencies
 app/src/main/jni/librime/
 app/src/main/jni/snappy/
-app/src/main/jni/cmake/
 app/src/main/jni/boost*
 
 # Large archives

@@ -60,7 +60,8 @@ fun KeyboardLayout(
     showBottomButtons: Boolean = false,
     onHideKeyboard: (() -> Unit)? = null,
     onSwitchKeyboard: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onKeyPressDown: ((String) -> Unit)? = null
 ) {
     var swipeState by remember { mutableStateOf(SwipeState()) }
     var bubblePosition by remember { mutableStateOf(IntOffset(0, 0)) }
@@ -100,7 +101,8 @@ fun KeyboardLayout(
                         val bubbleTop = relativeY + bubbleOffsetYPx
                         bubblePosition = IntOffset(bubbleLeft.roundToInt(), bubbleTop.roundToInt())
                     }
-                }
+                },
+                onKeyPressDown = onKeyPressDown
             )
             
             KeyboardRowWithConfig(
@@ -122,20 +124,22 @@ fun KeyboardLayout(
                         val bubbleTop = relativeY + bubbleOffsetYPx
                         bubblePosition = IntOffset(bubbleLeft.roundToInt(), bubbleTop.roundToInt())
                     }
-                }
+                },
+                onKeyPressDown = onKeyPressDown
             )
             
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                IconKeyButton(
+IconKeyButton(
                     icon = androidx.compose.ui.graphics.vector.rememberVectorPainter(Icons.Default.ArrowUpward),
                     onClick = { onKeyPress("shift") },
                     backgroundColor = specialKeyBackgroundColor,
                     iconColor = keyTextColor,
                     modifier = Modifier.weight(1.2f),
-                    isHighlighted = isShifted
+                    isHighlighted = isShifted,
+                    onPress = { onKeyPressDown?.invoke("shift") }
                 )
                 
                 Row(
@@ -171,7 +175,8 @@ fun KeyboardLayout(
                                     val bubbleTop = relativeY + bubbleOffsetYPx
                                     bubblePosition = IntOffset(bubbleLeft.roundToInt(), bubbleTop.roundToInt())
                                 }
-                            }
+                            },
+                            onPress = { onKeyPressDown?.invoke(key) }
                         )
                     }
                 }
@@ -184,7 +189,8 @@ fun KeyboardLayout(
                     modifier = Modifier.weight(1.2f),
                     swipeText = "清空",
                     onSwipe = { onKeyPress("clear_composition") },
-                    onLongClick = { onKeyPress("delete") }
+                    onLongClick = { onKeyPress("delete") },
+                    onPress = { onKeyPressDown?.invoke("delete") }
                 )
             }
             
@@ -197,7 +203,8 @@ fun KeyboardLayout(
                     onClick = { onKeyPress("mode_change") },
                     backgroundColor = specialKeyBackgroundColor,
                     textColor = keyTextColor,
-                    modifier = Modifier.weight(1.2f)
+                    modifier = Modifier.weight(1.2f),
+                    onPress = { onKeyPressDown?.invoke("mode_change") }
                 )
                 
                 KeyButton(
@@ -205,7 +212,8 @@ fun KeyboardLayout(
                     onClick = { onKeyPress("ime_switch") },
                     backgroundColor = specialKeyBackgroundColor,
                     textColor = keyTextColor,
-                    modifier = Modifier.weight(0.8f)
+                    modifier = Modifier.weight(0.8f),
+                    onPress = { onKeyPressDown?.invoke("ime_switch") }
                 )
                 
                 SpaceKeyButton(
@@ -213,7 +221,8 @@ fun KeyboardLayout(
                     backgroundColor = keyBackgroundColor,
                     textColor = keyTextColor,
                     schemaName = schemaName,
-                    modifier = Modifier.weight(3f)
+                    modifier = Modifier.weight(3f),
+                    onPress = { onKeyPressDown?.invoke("space") }
                 )
                 
                 SwipeableKeyButton(
@@ -235,7 +244,8 @@ fun KeyboardLayout(
                             val bubbleTop = relativeY + bubbleOffsetYPx
                             bubblePosition = IntOffset(bubbleLeft.roundToInt(), bubbleTop.roundToInt())
                         }
-                    }
+                    },
+                    onPress = { onKeyPressDown?.invoke(if (isAsciiMode) "." else "。") }
                 )
                 
                 KeyButton(
@@ -243,7 +253,8 @@ fun KeyboardLayout(
                     onClick = { onKeyPress("enter") },
                     backgroundColor = specialKeyBackgroundColor,
                     textColor = keyTextColor,
-                    modifier = Modifier.weight(1.2f)
+                    modifier = Modifier.weight(1.2f),
+                    onPress = { onKeyPressDown?.invoke("enter") }
                 )
             }
             
@@ -334,7 +345,8 @@ fun KeyboardRowWithConfig(
     isShifted: Boolean,
     isAsciiMode: Boolean,
     modifier: Modifier = Modifier,
-    onSwipeStateChange: ((SwipeState, Rect) -> Unit)? = null
+    onSwipeStateChange: ((SwipeState, Rect) -> Unit)? = null,
+    onKeyPressDown: ((String) -> Unit)? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -357,7 +369,8 @@ fun KeyboardRowWithConfig(
                 swipeDownText = swipeDownText,
                 onSwipe = if (swipeUpText != null) onKeyPress else null,
                 onSwipeDown = if (isAsciiMode && swipeDownText != null) onKeyPress else null,
-                onSwipeStateChange = onSwipeStateChange
+                onSwipeStateChange = onSwipeStateChange,
+                onPress = { onKeyPressDown?.invoke(key) }
             )
         }
     }

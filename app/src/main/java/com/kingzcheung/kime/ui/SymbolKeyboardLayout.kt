@@ -26,7 +26,8 @@ fun SymbolKeyboardLayout(
     keyBackgroundColor: Color,
     keyTextColor: Color,
     specialKeyBackgroundColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onKeyPressDown: ((String) -> Unit)? = null
 ) {
     val symbolPages = listOf(
         listOf(
@@ -69,7 +70,8 @@ fun SymbolKeyboardLayout(
                         onClick = { onKeyPress(symbol) },
                         backgroundColor = keyBackgroundColor,
                         textColor = keyTextColor,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        onPress = { onKeyPressDown?.invoke(symbol) }
                     )
                 }
             }
@@ -86,7 +88,8 @@ IconKeyButton(
             onClick = { onKeyPress("abc") },
             backgroundColor = specialKeyBackgroundColor,
             iconColor = keyTextColor,
-            modifier = Modifier.weight(1.2f)
+            modifier = Modifier.weight(1.2f),
+            onPress = { onKeyPressDown?.invoke("abc") }
         )
             
             KeyButton(
@@ -94,7 +97,8 @@ IconKeyButton(
                 onClick = { onKeyPress("123") },
                 backgroundColor = specialKeyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1.2f)
+                modifier = Modifier.weight(1.2f),
+                onPress = { onKeyPressDown?.invoke("123") }
             )
             
             KeyButton(
@@ -108,7 +112,8 @@ IconKeyButton(
                 },
                 backgroundColor = specialKeyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke("◀") }
             )
             
             KeyButton(
@@ -130,7 +135,8 @@ IconKeyButton(
                 },
                 backgroundColor = specialKeyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke("▶") }
             )
             
 SwipeableIconKeyButton(
@@ -141,7 +147,8 @@ SwipeableIconKeyButton(
             modifier = Modifier.weight(1.2f),
             swipeText = "清空",
             onSwipe = { onKeyPress("clear_composition") },
-            onLongClick = { onKeyPress("delete") }
+            onLongClick = { onKeyPress("delete") },
+            onPress = { onKeyPressDown?.invoke("delete") }
         )
         }
     }

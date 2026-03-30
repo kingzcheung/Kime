@@ -30,7 +30,8 @@ fun NumberKeyboardLayout(
     keyBackgroundColor: Color,
     keyTextColor: Color,
     specialKeyBackgroundColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onKeyPressDown: ((String) -> Unit)? = null
 ) {
     // 固定的常用符号
     val symbols = listOf("@", "%", "-")
@@ -54,7 +55,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress(symbols[0]) },
                 backgroundColor = keyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke(symbols[0]) }
             )
             
             // 数字 1 2 3
@@ -64,7 +66,8 @@ fun NumberKeyboardLayout(
                     onClick = { onKeyPress(key) },
                     backgroundColor = keyBackgroundColor,
                     textColor = keyTextColor,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    onPress = { onKeyPressDown?.invoke(key) }
                 )
             }
             
@@ -77,7 +80,8 @@ fun NumberKeyboardLayout(
                     modifier = Modifier.weight(1f),
                     swipeText = "清空",
                     onSwipe = { onKeyPress("clear_composition") },
-                    onLongClick = { onKeyPress("delete") }
+                    onLongClick = { onKeyPress("delete") },
+                    onPress = { onKeyPressDown?.invoke("delete") }
                 )
         }
         
@@ -94,7 +98,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress(symbols[1]) },
                 backgroundColor = keyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke(symbols[1]) }
             )
             
             // 数字 4 5 6
@@ -104,7 +109,8 @@ fun NumberKeyboardLayout(
                     onClick = { onKeyPress(key) },
                     backgroundColor = keyBackgroundColor,
                     textColor = keyTextColor,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    onPress = { onKeyPressDown?.invoke(key) }
                 )
             }
             
@@ -114,7 +120,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress("space") },
                 backgroundColor = specialKeyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke("space") }
             )
         }
         
@@ -131,7 +138,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress(symbols[2]) },
                 backgroundColor = keyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke(symbols[2]) }
             )
             
             // 数字 7 8 9
@@ -141,7 +149,8 @@ fun NumberKeyboardLayout(
                     onClick = { onKeyPress(key) },
                     backgroundColor = keyBackgroundColor,
                     textColor = keyTextColor,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    onPress = { onKeyPressDown?.invoke(key) }
                 )
             }
             
@@ -151,7 +160,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress("emoji") },
                 backgroundColor = specialKeyBackgroundColor,
                 iconColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke("emoji") }
             )
         }
         
@@ -168,7 +178,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress("abc") },
                 backgroundColor = specialKeyBackgroundColor,
                 iconColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke("abc") }
             )
             
             // 符号切换按钮
@@ -177,7 +188,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress("symbol") },
                 backgroundColor = specialKeyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke("symbol") }
             )
             
             // 数字 0
@@ -186,7 +198,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress("0") },
                 backgroundColor = keyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1.5f)
+                modifier = Modifier.weight(1.5f),
+                onPress = { onKeyPressDown?.invoke("0") }
             )
             
             // 小数点
@@ -195,7 +208,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress(".") },
                 backgroundColor = keyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onPress = { onKeyPressDown?.invoke(".") }
             )
             
             // 确定/发送
@@ -204,7 +218,8 @@ fun NumberKeyboardLayout(
                 onClick = { onKeyPress("enter") },
                 backgroundColor = specialKeyBackgroundColor,
                 textColor = keyTextColor,
-                modifier = Modifier.weight(1.2f)
+                modifier = Modifier.weight(1.2f),
+                onPress = { onKeyPressDown?.invoke("enter") }
             )
         }
     }
