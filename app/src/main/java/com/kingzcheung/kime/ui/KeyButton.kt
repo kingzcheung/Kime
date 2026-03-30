@@ -54,7 +54,8 @@ fun KeyButton(
     onSwipe: ((String) -> Unit)? = null,
     onSwipeDown: ((String) -> Unit)? = null,
     onSwipeStateChange: ((SwipeState) -> Unit)? = null,
-    fontSize: androidx.compose.ui.unit.TextUnit? = null
+    fontSize: androidx.compose.ui.unit.TextUnit? = null,
+    onPress: (() -> Unit)? = null
 ) {
     var isPressed by remember { mutableStateOf(false) }
     var dragOffsetY by remember { mutableStateOf(0f) }
@@ -87,6 +88,7 @@ fun KeyButton(
                         isSwiping = false
                         isSwipeDown = false
                         onSwipeStateChange?.invoke(SwipeState(false, null, false))
+                        onPress?.invoke()
                     },
                     onDragEnd = {
                         if (!hasTriggeredSwipeUp && !hasTriggeredSwipeDown && dragOffsetY > swipeUpThreshold && dragOffsetY < swipeDownThreshold) {
@@ -140,7 +142,19 @@ fun KeyButton(
                     }
                 )
             }
-            .clickable { if (!hasTriggeredSwipeUp && !hasTriggeredSwipeDown) onClick() },
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        onPress?.invoke()
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onTap = {
+                        if (!hasTriggeredSwipeUp && !hasTriggeredSwipeDown) onClick()
+                    }
+                )
+            },
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -178,7 +192,8 @@ fun SwipeableKeyButton(
     swipeDownText: String? = null,
     onSwipe: ((String) -> Unit)? = null,
     onSwipeDown: ((String) -> Unit)? = null,
-    onSwipeStateChange: ((SwipeState, Rect) -> Unit)? = null
+    onSwipeStateChange: ((SwipeState, Rect) -> Unit)? = null,
+    onPress: (() -> Unit)? = null
 ) {
     var isPressed by remember { mutableStateOf(false) }
     var dragOffsetY by remember { mutableStateOf(0f) }
@@ -215,6 +230,7 @@ fun SwipeableKeyButton(
                         isSwiping = false
                         isSwipeDown = false
                         onSwipeStateChange?.invoke(SwipeState(false, null, false), buttonBounds)
+                        onPress?.invoke()
                     },
                     onDragEnd = {
                         if (!hasTriggeredSwipeUp && !hasTriggeredSwipeDown && dragOffsetY > swipeUpThreshold && dragOffsetY < swipeDownThreshold) {
@@ -268,7 +284,19 @@ fun SwipeableKeyButton(
                     }
                 )
             }
-            .clickable { if (!hasTriggeredSwipeUp && !hasTriggeredSwipeDown) onClick() },
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        onPress?.invoke()
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onTap = {
+                        if (!hasTriggeredSwipeUp && !hasTriggeredSwipeDown) onClick()
+                    }
+                )
+            },
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -306,7 +334,8 @@ fun KeyboardRow(
     swipeDownKeys: List<String>? = null,
     onSwipeKey: ((String) -> Unit)? = null,
     onSwipeDownKey: ((String) -> Unit)? = null,
-    onSwipeStateChange: ((SwipeState, Rect) -> Unit)? = null
+    onSwipeStateChange: ((SwipeState, Rect) -> Unit)? = null,
+    onKeyPressDown: ((String) -> Unit)? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -325,7 +354,8 @@ fun KeyboardRow(
                 swipeDownText = swipeDownText,
                 onSwipe = onSwipeKey,
                 onSwipeDown = onSwipeDownKey,
-                onSwipeStateChange = onSwipeStateChange
+                onSwipeStateChange = onSwipeStateChange,
+                onPress = { onKeyPressDown?.invoke(key) }
             )
         }
     }
@@ -339,7 +369,8 @@ fun IconKeyButton(
     iconColor: Color,
     modifier: Modifier = Modifier,
     isHighlighted: Boolean = false,
-    iconSize: androidx.compose.ui.unit.Dp = 20.dp
+    iconSize: androidx.compose.ui.unit.Dp = 20.dp,
+    onPress: (() -> Unit)? = null
 ) {
     var isPressed by remember { mutableStateOf(false) }
     
@@ -352,10 +383,18 @@ fun IconKeyButton(
                 else if (isHighlighted) backgroundColor.copy(alpha = 0.8f)
                 else backgroundColor
             )
-            .clickable {
-                isPressed = true
-                onClick()
-                isPressed = false
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        onPress?.invoke()
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onTap = {
+                        onClick()
+                    }
+                )
             },
         contentAlignment = Alignment.Center
     ) {
@@ -379,7 +418,8 @@ fun SwipeableIconKeyButton(
     iconSize: androidx.compose.ui.unit.Dp = 20.dp,
     swipeText: String? = null,
     onSwipe: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onPress: (() -> Unit)? = null
 ) {
     var isPressed by remember { mutableStateOf(false) }
     var dragOffsetY by remember { mutableStateOf(0f) }
@@ -390,7 +430,6 @@ fun SwipeableIconKeyButton(
     
     val swipeThreshold = -50f
     
-    // 长按重复触发
     LaunchedEffect(isLongPress) {
         if (isLongPress && onLongClick != null) {
             hasTriggeredLongPress = true
@@ -414,7 +453,7 @@ fun SwipeableIconKeyButton(
                 detectTapGestures(
                     onPress = {
                         isPressed = true
-                        hasTriggeredLongPress = false
+                        onPress?.invoke()
                         tryAwaitRelease()
                         isPressed = false
                         isLongPress = false
@@ -438,6 +477,7 @@ fun SwipeableIconKeyButton(
                         isLongPress = false
                         dragOffsetY = 0f
                         hasTriggeredSwipe = false
+                        onPress?.invoke()
                     },
                     onDragEnd = {
                         if (dragOffsetY < swipeThreshold && !hasTriggeredSwipe && onSwipe != null) {

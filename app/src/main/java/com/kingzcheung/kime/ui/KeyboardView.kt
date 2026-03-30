@@ -39,6 +39,7 @@ fun KeyboardView(
     clipboardItems: List<ClipboardItem> = emptyList(),
     quickSendItems: List<ClipboardItem> = emptyList(),
     onKeyPress: (String, Boolean) -> Unit,
+    onKeyPressDown: ((String) -> Unit)? = null,
     onCandidateSelect: (Int) -> Unit,
     onToggleDarkMode: (() -> Unit)? = null,
     onClipboard: (() -> Unit)? = null,
@@ -214,7 +215,8 @@ CandidateBar(
                                 specialKeyBackgroundColor = specialKeyBgColor,
                                 showBottomButtons = showBottomButtons,
                                 onHideKeyboard = onHideKeyboard,
-                                onSwitchKeyboard = onSwitchKeyboard
+                                onSwitchKeyboard = onSwitchKeyboard,
+                                onKeyPressDown = onKeyPressDown
                             )
                         }
                         KeyboardMode.NUMBER -> {
@@ -229,7 +231,8 @@ CandidateBar(
                                 },
                                 keyBackgroundColor = keyBgColor,
                                 keyTextColor = keyTextColor,
-                                specialKeyBackgroundColor = specialKeyBgColor
+                                specialKeyBackgroundColor = specialKeyBgColor,
+                                onKeyPressDown = onKeyPressDown
                             )
                         }
                         KeyboardMode.SYMBOL -> {
@@ -243,7 +246,8 @@ CandidateBar(
                                 },
                                 keyBackgroundColor = keyBgColor,
                                 keyTextColor = keyTextColor,
-                                specialKeyBackgroundColor = specialKeyBgColor
+                                specialKeyBackgroundColor = specialKeyBgColor,
+                                onKeyPressDown = onKeyPressDown
                             )
                         }
                     }

@@ -1,8 +1,8 @@
 package com.kingzcheung.kime.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,7 +33,8 @@ fun SpaceKeyButton(
     schemaName: String = "",
     modifier: Modifier = Modifier,
     onSwipeLeft: (() -> Unit)? = null,
-    onSwipeRight: (() -> Unit)? = null
+    onSwipeRight: (() -> Unit)? = null,
+    onPress: (() -> Unit)? = null
 ) {
     var isPressed by remember { mutableStateOf(false) }
     var dragOffsetX by remember { mutableStateOf(0f) }
@@ -57,6 +58,7 @@ fun SpaceKeyButton(
                         dragOffsetX = 0f
                         hasTriggeredSwipeLeft = false
                         hasTriggeredSwipeRight = false
+                        onPress?.invoke()
                     },
                     onDragEnd = {
                         if (!hasTriggeredSwipeLeft && !hasTriggeredSwipeRight && 
@@ -87,8 +89,18 @@ fun SpaceKeyButton(
                     }
                 )
             }
-            .clickable { 
-                if (!hasTriggeredSwipeLeft && !hasTriggeredSwipeRight) onClick() 
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isPressed = true
+                        onPress?.invoke()
+                        tryAwaitRelease()
+                        isPressed = false
+                    },
+                    onTap = {
+                        if (!hasTriggeredSwipeLeft && !hasTriggeredSwipeRight) onClick()
+                    }
+                )
             },
         contentAlignment = Alignment.Center
     ) {

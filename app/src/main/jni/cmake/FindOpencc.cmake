@@ -4,4 +4,4 @@
 
 set(Opencc_FOUND TRUE)
 set(Opencc_LIBRARY libopencc)
-set(Opencc_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/librime/deps/opencc/src")
+set(Opencc_INCLUDE_PATH "${CMAKE_BINARY_DIR}/include")

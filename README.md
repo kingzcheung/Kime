@@ -1,10 +1,4 @@
-<p align="center">
-  <img src="docs/logo.jpg" alt="Kime Logo" width="800"/>
-</p>
-
 # Kime - 安卓五笔输入法
-
-
 
 一款基于 [Rime](https://rime.im/) 引擎构建的 Android 五笔输入法，专注于简洁高效的中文输入体验。
 
@@ -20,21 +14,6 @@
 - **剪贴板管理** - 剪贴板历史记录，支持快捷发送
 - **词库管理** - 查看和管理当前输入方案词库
 - **候选词编码提示** - 候选词显示五笔编码，方便学习
-
-## 截图展示
-
-<table>
-  <tr>
-    <td><img src="docs/Screenshot_20260329_194632.jpg" width="300"/></td>
-    <td><img src="docs/Screenshot_20260329_194638.jpg" width="300"/></td>
-  </tr>
-  <tr>
-    <td><img src="docs/Screenshot_20260329_194708.jpg" width="300"/></td>
-    <td><img src="docs/Screenshot_20260329_194717.jpg" width="300"/></td>
-  </tr>
-</table>
-
-![Screenshot 5](docs/Screenshot_20260329_194917.jpg)
 
 ## 系统要求
 
@@ -112,4 +91,4 @@ app/
 
 ## 许可证
 
-GPLv3 License
+MIT License

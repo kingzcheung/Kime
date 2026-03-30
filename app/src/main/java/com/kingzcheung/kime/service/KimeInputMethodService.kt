@@ -150,6 +150,17 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         performVibration()
     }
     
+    private fun performKeyPressDownEffect(key: String) {
+        val keyType = when (key) {
+            "delete", "clear_composition" -> "delete"
+            "enter" -> "enter"
+            "space" -> "space"
+            else -> "standard"
+        }
+        playKeySound(keyType)
+        performVibration()
+    }
+    
     private fun loadDarkModePreference() {
         uiState.value = uiState.value.copy(
             darkMode = SettingsPreferences.getDarkMode(this),
@@ -271,6 +282,9 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                             candidateComments = state.candidateComments,
                             onKeyPress = { key, isShifted ->
                                 handleKeyPress(key, isShifted)
+                            },
+                            onKeyPressDown = { key ->
+                                performKeyPressDownEffect(key)
                             },
                             onCandidateSelect = { index ->
                                 selectCandidate(index)
@@ -414,14 +428,6 @@ class KimeInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     private fun handleKeyPress(key: String, isShifted: Boolean) {
-        val keyType = when (key) {
-            "delete", "clear_composition" -> "delete"
-            "enter" -> "enter"
-            "space" -> "space"
-            else -> "standard"
-        }
-        performKeyPressEffect(keyType)
-        
         serviceScope.launch(Dispatchers.Default) {
             val state = uiState.value
             var needsUIUpdate = false
